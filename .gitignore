@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Cache database
+*.db
+*.db-journal
+
+# Environment
+.env
+.env.local
+.env.production
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE (project-specific config is committed; user-specific is not)
+.idea/
+*.swp
+*.swo
+
+# Test coverage
+coverage/
+
+# Logs
+*.log

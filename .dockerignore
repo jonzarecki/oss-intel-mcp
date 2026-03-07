@@ -1,0 +1,16 @@
+node_modules
+dist
+.env
+.env.*
+*.db
+*.db-journal
+.git
+.github
+.cursor
+.claude
+.context
+coverage
+tests
+demo
+*.md
+!README.md

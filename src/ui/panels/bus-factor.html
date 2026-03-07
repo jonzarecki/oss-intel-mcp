@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bus Factor</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
+  background: var(--color-background-primary, #1a1b26);
+  color: var(--color-text-primary, #c0caf5);
+  line-height: 1.4; padding: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+.head {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 16px;
+}
+.title {
+  font-size: var(--font-text-xs-size, 11px);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-tertiary, #565f89);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.risk-badge {
+  font-size: var(--font-text-xs-size, 11px);
+  font-weight: var(--font-weight-semibold, 600);
+  padding: 2px 10px;
+  border-radius: var(--border-radius-full, 9999px);
+}
+.risk-high {
+  background: color-mix(in srgb, var(--color-text-danger, #f7768e) 15%, transparent);
+  color: var(--color-text-danger, #f7768e);
+}
+.risk-ok {
+  background: color-mix(in srgb, var(--color-text-success, #9ece6a) 15%, transparent);
+  color: var(--color-text-success, #9ece6a);
+}
+.big-score {
+  font-size: 48px; font-weight: 800; line-height: 1;
+  margin-bottom: 20px;
+  font-variant-numeric: tabular-nums;
+}
+.contributors {
+  display: flex; flex-direction: column; gap: 8px;
+  margin-bottom: 16px;
+}
+.c-row {
+  display: flex; align-items: center; gap: 8px;
+}
+.c-name {
+  width: 100px; flex-shrink: 0;
+  font-size: var(--font-text-xs-size, 12px);
+  color: var(--color-text-secondary, #a9b1d6);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.c-bar-track {
+  flex: 1; height: 7px;
+  background: var(--color-background-secondary, #24283b);
+  border-radius: var(--border-radius-xs, 4px);
+  overflow: hidden;
+}
+.c-bar-fill {
+  height: 100%;
+  border-radius: var(--border-radius-xs, 4px);
+  background: var(--color-text-info, #7aa2f7);
+  transition: width 0.5s ease;
+}
+.c-pct {
+  width: 36px; text-align: right; flex-shrink: 0;
+  font-size: var(--font-text-xs-size, 12px);
+  color: var(--color-text-tertiary, #565f89);
+  font-variant-numeric: tabular-nums;
+}
+.meta {
+  display: flex; gap: 16px;
+}
+.meta-item {
+  display: flex; align-items: baseline; gap: 6px;
+}
+.meta-val {
+  font-size: var(--font-text-sm-size, 14px);
+  font-weight: var(--font-weight-semibold, 600);
+  font-variant-numeric: tabular-nums;
+}
+.meta-lbl {
+  font-size: var(--font-text-xs-size, 11px);
+  color: var(--color-text-tertiary, #565f89);
+}
+
+.sk { animation: pulse 1.5s ease-in-out infinite; }
+.sk-l { height: 10px; border-radius: 6px; background: var(--color-background-secondary, #24283b); margin-bottom: 10px; }
+.sk-b { height: 48px; width: 80px; border-radius: 8px; background: var(--color-background-secondary, #24283b); margin-bottom: 16px; }
+.w30 { width: 30%; } .w80 { width: 80%; } .w60 { width: 60%; } .w50 { width: 50%; }
+@keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.7; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="sk">
+    <div class="sk-l w30"></div>
+    <div class="sk-b"></div>
+    <div class="sk-l w80"></div>
+    <div class="sk-l w60"></div>
+    <div class="sk-l w50"></div>
+    <div style="display:flex;gap:16px;margin-top:12px"><div class="sk-l" style="width:80px"></div><div class="sk-l" style="width:80px"></div></div>
+  </div>
+</div>
+<script type="module" src="./bus-factor.ts"></script>
+</body>
+</html>

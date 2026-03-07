@@ -1,0 +1,52 @@
+{
+  "repo": "expressjs/express",
+  "prHealth": {
+    "mergeRate": 0.28,
+    "medianTimeToMergeHours": 184.6,
+    "medianTimeToFirstReviewHours": null,
+    "label": "concerning",
+    "score": 11
+  },
+  "issueHealth": {
+    "medianResponseTimeHours": 0.4,
+    "closeRate": 0.476,
+    "label": "moderate",
+    "score": 50
+  },
+  "goodFirstIssueCount": 1,
+  "contributorRetention": {
+    "totalContributors": 63,
+    "repeatContributors": 13,
+    "retentionRate": 0.20634920634920634
+  },
+  "topMaintainers": [
+    {
+      "login": "tj",
+      "contributions": 3881,
+      "organization": "Apex"
+    },
+    {
+      "login": "dougwilson",
+      "contributions": 1232,
+      "organization": "Somethingdoug"
+    },
+    {
+      "login": "jonathanong",
+      "contributions": 84,
+      "organization": "Houzz"
+    },
+    {
+      "login": "defunctzombie",
+      "contributions": 70,
+      "organization": "Independent"
+    },
+    {
+      "login": "wesleytodd",
+      "contributions": 48,
+      "organization": "Wesleytodd"
+    }
+  ],
+  "enrichmentSources": [
+    "oss-insight"
+  ]
+}

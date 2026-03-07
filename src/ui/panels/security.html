@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Security</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
+  background: var(--color-background-primary, #1a1b26);
+  color: var(--color-text-primary, #c0caf5);
+  line-height: 1.4; padding: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+.title {
+  font-size: var(--font-text-xs-size, 11px);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-tertiary, #565f89);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-bottom: 16px;
+}
+.hero {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 20px;
+}
+.hero svg { flex-shrink: 0; }
+.hero-info { flex: 1; }
+.hero-score {
+  font-size: var(--font-heading-2xl-size, 28px);
+  font-weight: var(--font-weight-bold, 700);
+  font-variant-numeric: tabular-nums;
+}
+.hero-max {
+  font-size: var(--font-text-sm-size, 14px);
+  color: var(--color-text-tertiary, #565f89);
+}
+.hero-grade {
+  font-size: var(--font-text-sm-size, 14px);
+  font-weight: var(--font-weight-semibold, 600);
+  margin-top: 2px;
+}
+.checks {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+.check {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--color-background-secondary, #24283b);
+  border-radius: var(--border-radius-sm, 6px);
+  padding: 10px 12px;
+}
+.check-score {
+  font-size: var(--font-text-sm-size, 14px);
+  font-weight: var(--font-weight-bold, 700);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.check-name {
+  font-size: var(--font-text-xs-size, 12px);
+  color: var(--color-text-secondary, #a9b1d6);
+  flex: 1;
+}
+.check-bar {
+  width: 40px; height: 4px; flex-shrink: 0;
+  background: var(--color-background-tertiary, #1a1b26);
+  border-radius: 2px; overflow: hidden;
+}
+.check-bar-fill {
+  height: 100%; border-radius: 2px;
+  transition: width 0.5s ease;
+}
+.no-data {
+  text-align: center; padding: 40px 0;
+  font-size: var(--font-text-sm-size, 13px);
+  color: var(--color-text-tertiary, #565f89);
+}
+
+.sk { animation: pulse 1.5s ease-in-out infinite; }
+.sk-l { height: 10px; border-radius: 6px; background: var(--color-background-secondary, #24283b); margin-bottom: 10px; }
+.sk-b { height: 60px; border-radius: 8px; background: var(--color-background-secondary, #24283b); margin-bottom: 12px; }
+.sk-row { display: flex; gap: 8px; }
+.sk-row > div { flex: 1; height: 40px; border-radius: 6px; background: var(--color-background-secondary, #24283b); }
+.w30 { width: 30%; }
+@keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.7; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="sk">
+    <div class="sk-l w30"></div>
+    <div class="sk-b"></div>
+    <div class="sk-row"><div></div><div></div></div>
+    <div style="height:8px"></div>
+    <div class="sk-row"><div></div><div></div></div>
+  </div>
+</div>
+<script type="module" src="./security.ts"></script>
+</body>
+</html>

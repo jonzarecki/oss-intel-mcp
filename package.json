@@ -1,0 +1,62 @@
+{
+	"name": "oss-intel-mcp",
+	"version": "0.1.0",
+	"description": "MCP server providing AI-native open-source repository intelligence with interactive UI panels",
+	"type": "module",
+	"main": "dist/index.js",
+	"bin": {
+		"oss-intel-mcp": "dist/index.js"
+	},
+	"scripts": {
+		"dev": "tsx src/index.ts",
+		"dev:stdio": "tsx src/index.ts --stdio",
+		"build": "tsup && tsx scripts/build-panels.ts",
+		"build:panels": "tsx scripts/build-panels.ts",
+		"start": "node dist/index.js",
+		"start:stdio": "node dist/index.js --stdio",
+		"test": "vitest run",
+		"test:unit": "vitest run --exclude 'tests/e2e/**'",
+		"test:e2e": "vitest run tests/e2e/",
+		"test:all": "vitest run",
+		"test:ci": "pnpm typecheck && pnpm lint && pnpm test:unit",
+		"test:watch": "vitest",
+		"typecheck": "tsc --noEmit",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
+		"demo": "bash demo/demo.sh",
+		"demo:replay": "bash demo/demo.sh --replay",
+		"demo:record": "vhs demo/record-gif.tape"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/ext-apps": "^1.1.2",
+		"@modelcontextprotocol/sdk": "^1.27.1",
+		"@octokit/rest": "^22.0.1",
+		"better-sqlite3": "^12.6.2",
+		"dotenv": "^16.4.0",
+		"zod": "^4.3.6"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.0",
+		"@types/better-sqlite3": "^7.6.0",
+		"@types/node": "^22.0.0",
+		"tsup": "^8.0.0",
+		"tsx": "^4.0.0",
+		"typescript": "^5.7.0",
+		"vite": "^7.3.1",
+		"vite-plugin-singlefile": "^2.3.0",
+		"vitest": "^3.0.0"
+	},
+	"engines": {
+		"node": ">=22.0.0"
+	},
+	"license": "MIT",
+	"packageManager": "pnpm@10.30.3+sha512.c961d1e0a2d8e354ecaa5166b822516668b7f44cb5bd95122d590dd81922f606f5473b6d23ec4a5be05e7fcd18e8488d47d978bbe981872f1145d06e9a740017",
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"@biomejs/biome",
+			"better-sqlite3",
+			"esbuild",
+			"@modelcontextprotocol/ext-apps"
+		]
+	}
+}

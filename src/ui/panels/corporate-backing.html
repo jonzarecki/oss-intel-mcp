@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Corporate Backing</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
+  background: var(--color-background-primary, #1a1b26);
+  color: var(--color-text-primary, #c0caf5);
+  line-height: 1.4; padding: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+.head {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 16px;
+}
+.title {
+  font-size: var(--font-text-xs-size, 11px);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-tertiary, #565f89);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.ef-badge {
+  font-size: var(--font-text-xs-size, 11px);
+  font-weight: var(--font-weight-semibold, 600);
+  padding: 2px 10px;
+  border-radius: var(--border-radius-full, 9999px);
+  background: color-mix(in srgb, var(--color-text-info, #7aa2f7) 15%, transparent);
+  color: var(--color-text-info, #7aa2f7);
+}
+.split {
+  margin-bottom: 16px;
+}
+.split-bar {
+  display: flex; height: 28px;
+  border-radius: var(--border-radius-sm, 6px);
+  overflow: hidden; margin-bottom: 6px;
+}
+.split-corp {
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--font-text-xs-size, 12px);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary, #fff);
+  background: var(--color-text-info, #7aa2f7);
+  transition: width 0.5s ease;
+}
+.split-indep {
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--font-text-xs-size, 12px);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary, #fff);
+  background: var(--color-text-success, #9ece6a);
+  transition: width 0.5s ease;
+}
+.split-legend {
+  display: flex; gap: 16px;
+}
+.split-legend-item {
+  display: flex; align-items: center; gap: 5px;
+  font-size: var(--font-text-xs-size, 11px);
+  color: var(--color-text-tertiary, #565f89);
+}
+.leg-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+}
+.orgs {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.org-row {
+  display: flex; align-items: center; gap: 8px;
+}
+.org-name {
+  width: 100px; flex-shrink: 0;
+  font-size: var(--font-text-xs-size, 12px);
+  color: var(--color-text-secondary, #a9b1d6);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.org-bar-track {
+  flex: 1; height: 7px;
+  background: var(--color-background-secondary, #24283b);
+  border-radius: var(--border-radius-xs, 4px);
+  overflow: hidden;
+}
+.org-bar-fill {
+  height: 100%;
+  border-radius: var(--border-radius-xs, 4px);
+  transition: width 0.5s ease;
+}
+.org-pct {
+  width: 36px; text-align: right; flex-shrink: 0;
+  font-size: var(--font-text-xs-size, 12px);
+  color: var(--color-text-tertiary, #565f89);
+  font-variant-numeric: tabular-nums;
+}
+
+.sk { animation: pulse 1.5s ease-in-out infinite; }
+.sk-l { height: 10px; border-radius: 6px; background: var(--color-background-secondary, #24283b); margin-bottom: 10px; }
+.sk-b { height: 28px; border-radius: 6px; background: var(--color-background-secondary, #24283b); margin-bottom: 12px; }
+.w30 { width: 30%; } .w80 { width: 80%; } .w60 { width: 60%; } .w50 { width: 50%; }
+@keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.7; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="sk">
+    <div class="sk-l w30"></div>
+    <div class="sk-b"></div>
+    <div class="sk-l w30"></div>
+    <div class="sk-l w80"></div>
+    <div class="sk-l w60"></div>
+    <div class="sk-l w50"></div>
+  </div>
+</div>
+<script type="module" src="./corporate-backing.ts"></script>
+</body>
+</html>

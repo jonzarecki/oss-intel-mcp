@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSS Intelligence MCP — Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e17;
+  --surface: #111827;
+  --surface-2: #1a2236;
+  --border: #1e293b;
+  --accent: #22d3ee;
+  --accent-glow: rgba(34, 211, 238, 0.15);
+  --green: #34d399;
+  --yellow: #fbbf24;
+  --red: #f87171;
+  --orange: #fb923c;
+  --purple: #a78bfa;
+  --pink: #f472b6;
+  --text: #e2e8f0;
+  --text-dim: #94a3b8;
+  --text-muted: #64748b;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.noise {
+  position: fixed;
+  inset: 0;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+header {
+  text-align: center;
+  padding: 48px 24px 32px;
+  position: relative;
+  z-index: 1;
+}
+
+header h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 2.8rem;
+  background: linear-gradient(135deg, var(--accent), var(--purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.02em;
+}
+
+header p {
+  color: var(--text-dim);
+  font-size: 1.1rem;
+  margin-top: 8px;
+  font-weight: 400;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px 64px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── flow section ── */
+.flow {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin: 32px 0 48px;
+  position: relative;
+}
+
+.flow-step {
+  flex: 1;
+  text-align: center;
+  padding: 28px 16px;
+  position: relative;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition: all 0.3s ease;
+}
+
+.flow-step:first-child { border-radius: 12px 0 0 12px; }
+.flow-step:last-child { border-radius: 0 12px 12px 0; }
+
+.flow-step:hover {
+  background: var(--surface-2);
+  border-color: var(--accent);
+  z-index: 2;
+  box-shadow: 0 0 30px var(--accent-glow);
+}
+
+.flow-step .icon {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.flow-step .label {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.flow-step .desc {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.flow-arrow {
+  position: absolute;
+  top: 50%;
+  right: -10px;
+  transform: translateY(-50%);
+  z-index: 3;
+  color: var(--accent);
+  font-size: 1.2rem;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* ── section titles ── */
+.section-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, var(--border), transparent);
+}
+
+/* ── tools grid ── */
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 48px;
+}
+
+.tool-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.tool-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+.tool-card.t1::before { background: linear-gradient(to right, var(--green), var(--accent)); }
+.tool-card.t2::before { background: linear-gradient(to right, var(--purple), var(--pink)); }
+.tool-card.t3::before { background: linear-gradient(to right, var(--orange), var(--yellow)); }
+
+.tool-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+.tool-name {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.tool-desc {
+  font-size: 0.88rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.tool-output {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag {
+  font-size: 0.7rem;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tag-green { background: rgba(52,211,153,0.12); color: var(--green); }
+.tag-purple { background: rgba(167,139,250,0.12); color: var(--purple); }
+.tag-orange { background: rgba(251,146,60,0.12); color: var(--orange); }
+.tag-cyan { background: rgba(34,211,238,0.12); color: var(--accent); }
+.tag-pink { background: rgba(244,114,182,0.12); color: var(--pink); }
+
+/* ── metrics + panels columns ── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+.col-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+}
+
+.col-card h3 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.metric-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s;
+}
+
+.metric-row:last-child { border-bottom: none; }
+.metric-row:hover { background: var(--surface-2); margin: 0 -12px; padding: 10px 12px; border-radius: 8px; }
+
+.metric-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.metric-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.metric-detail {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.metric-weight {
+  margin-left: auto;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--accent);
+  background: rgba(34,211,238,0.08);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* ── panel cards ── */
+.panel-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.panel-item:last-child { border-bottom: none; }
+
+.panel-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.panel-title {
+  font-weight: 600;
+  font-size: 0.88rem;
+  margin-bottom: 2px;
+}
+
+.panel-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* ── tech stack ── */
+.stack-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 48px;
+}
+
+.stack-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+  text-align: center;
+  transition: all 0.25s;
+}
+
+.stack-item:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+
+.stack-item .tech-icon { font-size: 1.5rem; margin-bottom: 8px; }
+.stack-item .tech-name { font-weight: 700; font-size: 0.85rem; }
+.stack-item .tech-role { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+
+/* ── verdict demo ── */
+.verdict-demo {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  margin-bottom: 48px;
+}
+
+.verdict-ring {
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.verdict-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.verdict-ring .bg { fill: none; stroke: var(--border); stroke-width: 8; }
+.verdict-ring .fg { fill: none; stroke: var(--green); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 314; stroke-dashoffset: 72; transition: stroke-dashoffset 1.5s ease; }
+
+.verdict-score {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.verdict-score .num { font-size: 2rem; font-weight: 700; color: var(--green); }
+.verdict-score .of { font-size: 0.7rem; color: var(--text-muted); }
+
+.verdict-breakdown { flex: 1; }
+.verdict-breakdown h3 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.1rem;
+  margin-bottom: 4px;
+}
+.verdict-breakdown .verdict-label {
+  font-size: 0.85rem;
+  color: var(--green);
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.bar-label {
+  width: 130px;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-align: right;
+}
+
+.bar-track {
+  flex: 1;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1.2s ease;
+}
+
+.bar-val {
+  width: 32px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* ── footer ── */
+footer {
+  text-align: center;
+  padding: 32px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  position: relative;
+  z-index: 1;
+}
+
+footer a { color: var(--accent); text-decoration: none; }
+
+/* ── responsive ── */
+@media (max-width: 768px) {
+  .flow { flex-direction: column; }
+  .flow-step { border-radius: 12px !important; }
+  .flow-arrow { display: none; }
+  .tools-grid, .stack-grid { grid-template-columns: 1fr; }
+  .two-col { grid-template-columns: 1fr; }
+  header h1 { font-size: 2rem; }
+  .verdict-demo { flex-direction: column; text-align: center; }
+}
+
+/* ── animate in ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate {
+  animation: fadeUp 0.6s ease forwards;
+  opacity: 0;
+}
+
+.d1 { animation-delay: 0.1s; }
+.d2 { animation-delay: 0.2s; }
+.d3 { animation-delay: 0.3s; }
+.d4 { animation-delay: 0.4s; }
+.d5 { animation-delay: 0.5s; }
+.d6 { animation-delay: 0.6s; }
+.d7 { animation-delay: 0.7s; }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+
+<header class="animate d1">
+  <h1>OSS Intelligence MCP Server</h1>
+  <p>AI-native open-source repository intelligence, delivered inside your editor</p>
+</header>
+
+<div class="container">
+
+  <!-- DATA FLOW -->
+  <div class="section-title animate d2">Data Flow</div>
+  <div class="flow animate d2">
+    <div class="flow-step">
+      <span class="icon">💬</span>
+      <div class="label">Developer Asks</div>
+      <div class="desc">"Should I use this library?"<br>in Cursor, Claude, VS Code...</div>
+      <span class="flow-arrow">→</span>
+    </div>
+    <div class="flow-step">
+      <span class="icon">🔧</span>
+      <div class="label">MCP Tool</div>
+      <div class="desc">AI invokes analyze_repo,<br>should_i_contribute, or compare</div>
+      <span class="flow-arrow">→</span>
+    </div>
+    <div class="flow-step">
+      <span class="icon">🐙</span>
+      <div class="label">GitHub API</div>
+      <div class="desc">Fetches repo data via Octokit<br>with SQLite cache layer</div>
+      <span class="flow-arrow">→</span>
+    </div>
+    <div class="flow-step">
+      <span class="icon">📊</span>
+      <div class="label">Metrics Engine</div>
+      <div class="desc">Computes bus factor, PR health,<br>activity trend, verdict score</div>
+      <span class="flow-arrow">→</span>
+    </div>
+    <div class="flow-step">
+      <span class="icon">✨</span>
+      <div class="label">Visual Response</div>
+      <div class="desc">Structured JSON + interactive<br>HTML panel in the editor</div>
+    </div>
+  </div>
+
+  <!-- TOOLS -->
+  <div class="section-title animate d3">MCP Tools</div>
+  <div class="tools-grid animate d3">
+    <div class="tool-card t1">
+      <div class="tool-name">analyze_repo(owner, repo)</div>
+      <div class="tool-desc">Comprehensive health report with an overall verdict: Safe to adopt, Use with caution, or Risky. The core intelligence tool.</div>
+      <div class="tool-output">
+        <span class="tag tag-green">Verdict 0-100</span>
+        <span class="tag tag-cyan">Bus Factor</span>
+        <span class="tag tag-purple">PR Health</span>
+        <span class="tag tag-orange">Releases</span>
+      </div>
+    </div>
+    <div class="tool-card t2">
+      <div class="tool-name">should_i_contribute(owner, repo)</div>
+      <div class="tool-desc">Contributor-focused analysis. Surfaces PR acceptance rate, review speed, maintainer responsiveness, and community health signals.</div>
+      <div class="tool-output">
+        <span class="tag tag-purple">PR Merge Rate</span>
+        <span class="tag tag-pink">Review Time</span>
+        <span class="tag tag-cyan">Good First Issues</span>
+      </div>
+    </div>
+    <div class="tool-card t3">
+      <div class="tool-name">compare_repos(repos[])</div>
+      <div class="tool-desc">Side-by-side comparison of 2-3 repos on all key metrics. Highlights the winner per metric with a summary recommendation.</div>
+      <div class="tool-output">
+        <span class="tag tag-orange">Side-by-Side</span>
+        <span class="tag tag-green">Winner Per Metric</span>
+        <span class="tag tag-cyan">Recommendation</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- METRICS + PANELS -->
+  <div class="two-col animate d4">
+    <div class="col-card">
+      <h3>📐 Metrics Engine</h3>
+      <div class="metric-row">
+        <div class="metric-icon" style="background:rgba(52,211,153,0.12)">📈</div>
+        <div>
+          <div class="metric-name">Activity Trend</div>
+          <div class="metric-detail">3-month commit volume comparison</div>
+        </div>
+        <span class="metric-weight">25%</span>
+      </div>
+      <div class="metric-row">
+        <div class="metric-icon" style="background:rgba(251,146,60,0.12)">🚌</div>
+        <div>
+          <div class="metric-name">Bus Factor</div>
+          <div class="metric-detail">Gini coefficient of commit distribution</div>
+        </div>
+        <span class="metric-weight">20%</span>
+      </div>
+      <div class="metric-row">
+        <div class="metric-icon" style="background:rgba(167,139,250,0.12)">🔀</div>
+        <div>
+          <div class="metric-name">PR Health</div>
+          <div class="metric-detail">Merge rate, time-to-merge, review time</div>
+        </div>
+        <span class="metric-weight">20%</span>
+      </div>
+      <div class="metric-row">
+        <div class="metric-icon" style="background:rgba(244,114,182,0.12)">💬</div>
+        <div>
+          <div class="metric-name">Issue Responsiveness</div>
+          <div class="metric-detail">Response time + close rate</div>
+        </div>
+        <span class="metric-weight">15%</span>
+      </div>
+      <div class="metric-row">
+        <div class="metric-icon" style="background:rgba(34,211,238,0.12)">📦</div>
+        <div>
+          <div class="metric-name">Release Cadence</div>
+          <div class="metric-detail">Interval regularity between releases</div>
+        </div>
+        <span class="metric-weight">10%</span>
+      </div>
+      <div class="metric-row">
+        <div class="metric-icon" style="background:rgba(251,191,36,0.12)">🏢</div>
+        <div>
+          <div class="metric-name">Corporate Backing</div>
+          <div class="metric-detail">Org affiliation + contribution share</div>
+        </div>
+        <span class="metric-weight">10%</span>
+      </div>
+    </div>
+
+    <div class="col-card">
+      <h3>🎨 Interactive UI Panels</h3>
+      <div class="panel-item">
+        <div class="panel-badge" style="background:rgba(52,211,153,0.12)">🛡️</div>
+        <div>
+          <div class="panel-title">"Should I Use This?" Card</div>
+          <div class="panel-desc">Verdict badge, score ring, key stats grid, 12-month sparkline, corporate backing. Designed to be screenshotted and shared.</div>
+        </div>
+      </div>
+      <div class="panel-item">
+        <div class="panel-badge" style="background:rgba(167,139,250,0.12)">👥</div>
+        <div>
+          <div class="panel-title">"Who Runs This Project?"</div>
+          <div class="panel-desc">Top 10 contributors, bar chart distribution, org pie chart, bus factor indicator.</div>
+        </div>
+      </div>
+      <div class="panel-item">
+        <div class="panel-badge" style="background:rgba(244,114,182,0.12)">🤝</div>
+        <div>
+          <div class="panel-title">"Is It Worth Contributing?"</div>
+          <div class="panel-desc">PR merge funnel, review time gauge, responsiveness score, contributor retention bar.</div>
+        </div>
+      </div>
+      <div class="panel-item">
+        <div class="panel-badge" style="background:rgba(251,191,36,0.12)">🏛️</div>
+        <div>
+          <div class="panel-title">"Corporate Backing"</div>
+          <div class="panel-desc">Org affiliation pie chart, contribution table, trend indicator for corporate involvement.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VERDICT DEMO -->
+  <div class="section-title animate d5">Example Verdict Output</div>
+  <div class="verdict-demo animate d5">
+    <div class="verdict-ring">
+      <svg viewBox="0 0 120 120">
+        <circle class="bg" cx="60" cy="60" r="50"/>
+        <circle class="fg" cx="60" cy="60" r="50"/>
+      </svg>
+      <div class="verdict-score">
+        <span class="num">77</span>
+        <span class="of">/100</span>
+      </div>
+    </div>
+    <div class="verdict-breakdown">
+      <h3>facebook/react</h3>
+      <div class="verdict-label">✓ Safe to adopt</div>
+      <div class="bar-row">
+        <span class="bar-label">Activity Trend</span>
+        <div class="bar-track"><div class="bar-fill" style="width:72%;background:var(--green)"></div></div>
+        <span class="bar-val">72</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">Bus Factor</span>
+        <div class="bar-track"><div class="bar-fill" style="width:65%;background:var(--yellow)"></div></div>
+        <span class="bar-val">65</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">PR Health</span>
+        <div class="bar-track"><div class="bar-fill" style="width:88%;background:var(--green)"></div></div>
+        <span class="bar-val">88</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">Issue Responsiveness</span>
+        <div class="bar-track"><div class="bar-fill" style="width:70%;background:var(--green)"></div></div>
+        <span class="bar-val">70</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">Release Cadence</span>
+        <div class="bar-track"><div class="bar-fill" style="width:82%;background:var(--green)"></div></div>
+        <span class="bar-val">82</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">Corporate Backing</span>
+        <div class="bar-track"><div class="bar-fill" style="width:95%;background:var(--accent)"></div></div>
+        <span class="bar-val">95</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TECH STACK -->
+  <div class="section-title animate d6">Tech Stack</div>
+  <div class="stack-grid animate d6">
+    <div class="stack-item">
+      <div class="tech-icon">🟦</div>
+      <div class="tech-name">TypeScript (strict)</div>
+      <div class="tech-role">Runtime + MCP SDK</div>
+    </div>
+    <div class="stack-item">
+      <div class="tech-icon">🐙</div>
+      <div class="tech-name">Octokit</div>
+      <div class="tech-role">GitHub REST API client</div>
+    </div>
+    <div class="stack-item">
+      <div class="tech-icon">🗃️</div>
+      <div class="tech-name">SQLite</div>
+      <div class="tech-role">better-sqlite3 TTL cache</div>
+    </div>
+    <div class="stack-item">
+      <div class="tech-icon">🔌</div>
+      <div class="tech-name">MCP SDK</div>
+      <div class="tech-role">Server + ext-apps panels</div>
+    </div>
+    <div class="stack-item">
+      <div class="tech-icon">📐</div>
+      <div class="tech-name">Inline SVG</div>
+      <div class="tech-role">Self-contained charts</div>
+    </div>
+    <div class="stack-item">
+      <div class="tech-icon">⚡</div>
+      <div class="tech-name">Vitest</div>
+      <div class="tech-role">Unit + integration tests</div>
+    </div>
+    <div class="stack-item">
+      <div class="tech-icon">🧹</div>
+      <div class="tech-name">Biome</div>
+      <div class="tech-role">Linter + formatter</div>
+    </div>
+    <div class="stack-item">
+      <div class="tech-icon">📦</div>
+      <div class="tech-name">tsup</div>
+      <div class="tech-role">TypeScript bundler</div>
+    </div>
+  </div>
+
+  <!-- QUESTIONS -->
+  <div class="section-title animate d7">Two Questions This Server Answers</div>
+  <div class="two-col animate d7">
+    <div class="col-card" style="border-top:3px solid var(--green)">
+      <h3 style="color:var(--green)">🛡️ "Should I use this?"</h3>
+      <p style="color:var(--text-dim);font-size:0.88rem;line-height:1.6">
+        Is this dependency safe, maintained, and well-backed? Get a 0-100 verdict score based on activity trends, bus factor, PR health, issue responsiveness, release cadence, and corporate backing — far beyond star counts and last commit dates.
+      </p>
+    </div>
+    <div class="col-card" style="border-top:3px solid var(--purple)">
+      <h3 style="color:var(--purple)">🤝 "Should I contribute?"</h3>
+      <p style="color:var(--text-dim);font-size:0.88rem;line-height:1.6">
+        Will your PRs get reviewed? Is the community welcoming? See PR acceptance rates, median review times, maintainer responsiveness, good-first-issue availability, and contributor retention — everything you need before investing your time.
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  OSS Intelligence MCP Server — Built with the <a href="https://modelcontextprotocol.io">Model Context Protocol</a>
+</footer>
+
+</body>
+</html>

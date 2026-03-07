@@ -1,0 +1,276 @@
+{
+  "repo": {
+    "fullName": "expressjs/express",
+    "description": "Fast, unopinionated, minimalist web framework for node.",
+    "language": "JavaScript",
+    "license": "MIT",
+    "stars": 68869,
+    "forks": 22742,
+    "openIssues": 189,
+    "createdAt": "2009-06-26T18:56:01Z",
+    "archived": false
+  },
+  "verdict": {
+    "verdict": "Use with caution",
+    "score": 47,
+    "breakdown": [
+      {
+        "metric": "Activity Trend",
+        "score": 76,
+        "weight": 20,
+        "weightedScore": 15.2
+      },
+      {
+        "metric": "Bus Factor",
+        "score": 34,
+        "weight": 17,
+        "weightedScore": 5.8
+      },
+      {
+        "metric": "PR Health",
+        "score": 11,
+        "weight": 17,
+        "weightedScore": 1.9
+      },
+      {
+        "metric": "Security",
+        "score": 97,
+        "weight": 17,
+        "weightedScore": 16.5
+      },
+      {
+        "metric": "Issue Responsiveness",
+        "score": 24,
+        "weight": 13,
+        "weightedScore": 3.1
+      },
+      {
+        "metric": "Release Cadence",
+        "score": 35,
+        "weight": 8,
+        "weightedScore": 2.8
+      },
+      {
+        "metric": "Corporate Backing",
+        "score": 25,
+        "weight": 8,
+        "weightedScore": 2
+      }
+    ]
+  },
+  "metrics": {
+    "busFactor": {
+      "giniCoefficient": 0.944,
+      "topContributorShare": 0.674,
+      "top2Share": 0.888,
+      "isHighRisk": true,
+      "score": 34
+    },
+    "activityTrend": {
+      "trend": "growing",
+      "percentageChange": 0.2,
+      "recentCommits": 30,
+      "previousCommits": 25,
+      "score": 76
+    },
+    "prHealth": {
+      "mergeRate": 0.28,
+      "medianTimeToMergeHours": 184.6,
+      "medianTimeToFirstReviewHours": null,
+      "label": "concerning",
+      "score": 11
+    },
+    "issueHealth": {
+      "medianResponseTimeHours": 0.4,
+      "closeRate": 0.096,
+      "label": "concerning",
+      "score": 24
+    },
+    "releaseCadence": {
+      "averageIntervalDays": 49.7,
+      "regularityScore": 0,
+      "label": "irregular",
+      "score": 35
+    },
+    "affiliation": {
+      "topContributors": [
+        {
+          "login": "tj",
+          "organization": "Apex",
+          "commits": 3881
+        },
+        {
+          "login": "dougwilson",
+          "organization": "Somethingdoug",
+          "commits": 1232
+        },
+        {
+          "login": "jonathanong",
+          "organization": "Houzz",
+          "commits": 84
+        },
+        {
+          "login": "defunctzombie",
+          "organization": "Independent",
+          "commits": 70
+        },
+        {
+          "login": "wesleytodd",
+          "organization": "Wesleytodd",
+          "commits": 48
+        },
+        {
+          "login": "UlisesGascon",
+          "organization": "Nodesource",
+          "commits": 45
+        },
+        {
+          "login": "dependabot[bot]",
+          "organization": "Independent",
+          "commits": 36
+        },
+        {
+          "login": "ciaranj",
+          "organization": "Independent",
+          "commits": 26
+        },
+        {
+          "login": "bjohansebas",
+          "organization": "Independent",
+          "commits": 21
+        },
+        {
+          "login": "slaskis",
+          "organization": "Independent",
+          "commits": 21
+        }
+      ],
+      "orgShares": [
+        {
+          "organization": "Apex",
+          "percentage": 0.6966433315383235,
+          "contributorCount": 1
+        },
+        {
+          "organization": "Somethingdoug",
+          "percentage": 0.22114521629868963,
+          "contributorCount": 1
+        },
+        {
+          "organization": "Independent",
+          "percentage": 0.033566684616765395,
+          "contributorCount": 7
+        },
+        {
+          "organization": "Houzz",
+          "percentage": 0.015078082929456112,
+          "contributorCount": 1
+        },
+        {
+          "organization": "Wesleytodd",
+          "percentage": 0.008616047388260635,
+          "contributorCount": 1
+        },
+        {
+          "organization": "Nodesource",
+          "percentage": 0.008077544426494346,
+          "contributorCount": 1
+        },
+        {
+          "organization": "Jonchurch",
+          "percentage": 0.003590019745108598,
+          "contributorCount": 1
+        },
+        {
+          "organization": "Blakeembrey",
+          "percentage": 0.0030515167833423083,
+          "contributorCount": 1
+        },
+        {
+          "organization": "Sprengnetter Austria",
+          "percentage": 0.0026925148088314485,
+          "contributorCount": 1
+        },
+        {
+          "organization": "IBM",
+          "percentage": 0.0023335128343205886,
+          "contributorCount": 1
+        },
+        {
+          "organization": "Notrab",
+          "percentage": 0.0014360078980434393,
+          "contributorCount": 1
+        },
+        {
+          "organization": "Herodevs",
+          "percentage": 0.0012565069107880094,
+          "contributorCount": 1
+        },
+        {
+          "organization": "CodePillars-Developers",
+          "percentage": 0.0012565069107880094,
+          "contributorCount": 1
+        },
+        {
+          "organization": "Https://Vercel",
+          "percentage": 0.0012565069107880094,
+          "contributorCount": 1
+        }
+      ],
+      "corporatePercentage": 0.966,
+      "elephantFactor": 1,
+      "score": 25
+    },
+    "security": {
+      "overallScore": 97,
+      "subScores": [
+        {
+          "name": "Maintained",
+          "score": 10,
+          "maxScore": 10,
+          "reason": "30 commit(s) and 7 issue activity found in the last 90 days -- score normalized to 10"
+        },
+        {
+          "name": "Token Permissions",
+          "score": 10,
+          "maxScore": 10,
+          "reason": "GitHub workflow tokens follow principle of least privilege"
+        },
+        {
+          "name": "Code Review",
+          "score": 9,
+          "maxScore": 10,
+          "reason": "Found 20/21 approved changesets -- score normalized to 9"
+        },
+        {
+          "name": "Dangerous Workflows",
+          "score": 10,
+          "maxScore": 10,
+          "reason": "no dangerous workflow patterns detected"
+        },
+        {
+          "name": "Security Policy",
+          "score": 10,
+          "maxScore": 10,
+          "reason": "security policy file detected"
+        },
+        {
+          "name": "SAST",
+          "score": 10,
+          "maxScore": 10,
+          "reason": "SAST tool is run on all commits"
+        }
+      ],
+      "score": 97
+    }
+  },
+  "enrichmentSources": [
+    "deps.dev",
+    "oss-insight"
+  ],
+  "rateLimit": {
+    "remaining": 4856,
+    "limit": 5000,
+    "resetAt": "2026-03-07T19:53:31.000Z"
+  }
+}

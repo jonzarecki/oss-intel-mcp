@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Activity Pulse</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
+  background: var(--color-background-primary, #1a1b26);
+  color: var(--color-text-primary, #c0caf5);
+  line-height: 1.4; padding: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+.title {
+  font-size: var(--font-text-xs-size, 11px);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-tertiary, #565f89);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+.trend-row {
+  display: flex; align-items: baseline; gap: 10px;
+  margin-bottom: 20px;
+}
+.trend-arrow {
+  font-size: 36px; font-weight: 800; line-height: 1;
+}
+.trend-pct {
+  font-size: var(--font-heading-2xl-size, 28px);
+  font-weight: var(--font-weight-bold, 700);
+  font-variant-numeric: tabular-nums;
+}
+.trend-label {
+  font-size: var(--font-text-sm-size, 14px);
+  color: var(--color-text-secondary, #a9b1d6);
+}
+.compare {
+  display: flex; gap: 12px; margin-bottom: 16px;
+}
+.compare-box {
+  flex: 1;
+  background: var(--color-background-secondary, #24283b);
+  border-radius: var(--border-radius-md, 8px);
+  padding: 12px;
+}
+.compare-val {
+  font-size: var(--font-heading-lg-size, 20px);
+  font-weight: var(--font-weight-bold, 700);
+  font-variant-numeric: tabular-nums;
+}
+.compare-lbl {
+  font-size: var(--font-text-xs-size, 11px);
+  color: var(--color-text-tertiary, #565f89);
+  text-transform: uppercase; letter-spacing: 0.3px;
+  margin-top: 2px;
+}
+.bar-compare {
+  display: flex; height: 10px; gap: 3px;
+  border-radius: var(--border-radius-xs, 4px);
+  overflow: hidden; margin-bottom: 20px;
+}
+.bar-recent, .bar-prev {
+  border-radius: var(--border-radius-xs, 4px);
+  transition: width 0.5s ease;
+}
+.bar-recent { background: var(--color-text-info, #7aa2f7); }
+.bar-prev { background: var(--color-background-secondary, #24283b); }
+.release-row {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--color-background-secondary, #24283b);
+  border-radius: var(--border-radius-md, 8px);
+  padding: 12px;
+}
+.release-val {
+  font-size: var(--font-heading-lg-size, 18px);
+  font-weight: var(--font-weight-bold, 700);
+  font-variant-numeric: tabular-nums;
+}
+.release-info { flex: 1; }
+.release-lbl {
+  font-size: var(--font-text-xs-size, 11px);
+  color: var(--color-text-tertiary, #565f89);
+  text-transform: uppercase; letter-spacing: 0.3px;
+}
+.release-sub {
+  font-size: var(--font-text-xs-size, 11px);
+  color: var(--color-text-tertiary, #565f89);
+}
+
+.sk { animation: pulse 1.5s ease-in-out infinite; }
+.sk-l { height: 10px; border-radius: 6px; background: var(--color-background-secondary, #24283b); margin-bottom: 10px; }
+.sk-b { height: 36px; border-radius: 8px; background: var(--color-background-secondary, #24283b); margin-bottom: 12px; }
+.sk-row { display: flex; gap: 12px; margin-bottom: 12px; }
+.sk-row > div { flex: 1; }
+.w30 { width: 30%; }
+@keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.7; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="sk">
+    <div class="sk-l w30"></div>
+    <div class="sk-b" style="height:42px;width:60%"></div>
+    <div class="sk-row"><div class="sk-b"></div><div class="sk-b"></div></div>
+    <div class="sk-b" style="height:10px"></div>
+    <div class="sk-b"></div>
+  </div>
+</div>
+<script type="module" src="./activity-pulse.ts"></script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Repository Comparison</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
+  background: var(--color-background-primary, #1a1b26);
+  color: var(--color-text-primary, #c0caf5);
+  line-height: 1.4; padding: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+.rec {
+  font-size: var(--font-text-sm-size, 13px);
+  color: var(--color-text-secondary, #a9b1d6);
+  background: var(--color-background-secondary, #24283b);
+  border-radius: var(--border-radius-md, 8px);
+  padding: 10px 14px; margin-bottom: 16px;
+  border-left: 3px solid var(--color-text-info, #7aa2f7);
+}
+table {
+  width: 100%; border-collapse: collapse;
+  font-size: var(--font-text-xs-size, 12px);
+}
+th {
+  text-align: left; padding: 8px 10px;
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-tertiary, #565f89);
+  text-transform: uppercase; letter-spacing: 0.3px;
+  border-bottom: 1px solid var(--color-border-tertiary, rgba(31,30,29,0.15));
+  font-size: var(--font-text-xs-size, 11px);
+}
+th.repo-col {
+  color: var(--color-text-info, #7aa2f7);
+  text-transform: none; letter-spacing: 0;
+  font-size: var(--font-text-xs-size, 12px);
+}
+td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--color-border-tertiary, rgba(31,30,29,0.1));
+  font-variant-numeric: tabular-nums;
+}
+tr:last-child td { border-bottom: none; }
+.metric-name {
+  color: var(--color-text-secondary, #a9b1d6);
+}
+.winner {
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-text-success, #9ece6a);
+}
+.score-cell {
+  text-align: center;
+}
+
+.sk { animation: pulse 1.5s ease-in-out infinite; }
+.sk-l { height: 10px; border-radius: 6px; background: var(--color-background-secondary, #24283b); margin-bottom: 10px; }
+.sk-b { height: 200px; border-radius: 8px; background: var(--color-background-secondary, #24283b); }
+.w60 { width: 60%; }
+@keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.7; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="sk">
+    <div class="sk-l w60"></div>
+    <div class="sk-b"></div>
+  </div>
+</div>
+<script type="module" src="./comparison.ts"></script>
+</body>
+</html>
