@@ -342,7 +342,11 @@ async function main(): Promise<void> {
 				printContribute(result);
 			}
 		} else if (command === "compare") {
-			const repoArgs = args.slice(1).filter((a) => !a.startsWith("--"));
+			const repoArgs = args.slice(1).filter((a, i, arr) => {
+				if (a.startsWith("--")) return false;
+				if (i > 0 && arr[i - 1] === "--fixture") return false;
+				return true;
+			});
 			if (repoArgs.length < 2) {
 				process.stderr.write("Usage: npx tsx demo/run-tool.ts compare owner/repo owner/repo\n");
 				process.exit(1);

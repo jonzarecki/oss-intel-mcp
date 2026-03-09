@@ -4,6 +4,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D22-brightgreen.svg)](https://nodejs.org)
 
+<p align="center">
+  <img src="demo/screenshot-analyze.png" width="49%" alt="Score card" />
+  <img src="demo/screenshot-corporate.png" width="49%" alt="Corporate backing" />
+</p>
+
 ![demo](demo/demo.gif)
 
 An MCP server that provides AI-native open-source repository intelligence. Ask questions about any GitHub repository and get structured, visual answers with interactive UI panels — directly inside Cursor, Claude Desktop, VS Code, or any MCP-compatible client.
