@@ -79,6 +79,7 @@ export async function handleAnalyzeRepo(
 		commitActivity,
 		pulls,
 		issues,
+		openIssues,
 		releases,
 		commitEmailsRaw,
 		depsDevData,
@@ -89,6 +90,7 @@ export async function handleAnalyzeRepo(
 		github.getCommitActivity(owner, repo),
 		github.getPulls(owner, repo, "closed", 100),
 		github.getIssues(owner, repo, "closed", 100),
+		github.getIssues(owner, repo, "open", 100),
 		github.getReleases(owner, repo, 10),
 		github.getRecentCommitEmails(owner, repo),
 		getProjectInfo(owner, repo, cache),
@@ -220,7 +222,7 @@ export async function handleAnalyzeRepo(
 			};
 		}),
 	);
-	const issueHealth = computeIssueHealth(issueData, repoData.open_issues_count);
+	const issueHealth = computeIssueHealth(issueData, openIssues.length);
 
 	const releaseCadence = computeReleaseCadence(
 		releases.map((r) => ({
@@ -274,7 +276,7 @@ export async function handleAnalyzeRepo(
 			license: repoData.license?.spdx_id ?? null,
 			stars: repoData.stargazers_count,
 			forks: repoData.forks_count,
-			openIssues: repoData.open_issues_count,
+			openIssues: openIssues.length,
 			createdAt: repoData.created_at,
 			archived: repoData.archived,
 		},
