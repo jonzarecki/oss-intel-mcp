@@ -101,3 +101,7 @@ export interface CommitAuthorEmail {
 	email: string;
 	name: string;
 }
+
+export interface GitHubOrg {
+	login: string;
+}

@@ -8,6 +8,7 @@ import type {
 	GitHubContributor,
 	GitHubIssue,
 	GitHubIssueComment,
+	GitHubOrg,
 	GitHubPullRequest,
 	GitHubRelease,
 	GitHubRepo,
@@ -32,6 +33,15 @@ function isNotFoundError(error: unknown): boolean {
 		return (error as { status: number }).status === 404;
 	}
 	return false;
+}
+
+function toMondayTimestamp(date: Date): number {
+	const d = new Date(date);
+	d.setUTCHours(0, 0, 0, 0);
+	const day = d.getUTCDay();
+	const diff = day === 0 ? -6 : 1 - day;
+	d.setUTCDate(d.getUTCDate() + diff);
+	return Math.floor(d.getTime() / 1000);
 }
 
 export interface RateLimitInfo {
@@ -284,6 +294,74 @@ export class GitHubClient {
 		const result = data as unknown as GitHubUser;
 		this.cache.set(key, result, TTL.USER);
 		return result;
+	}
+
+	async getCommitCountsFallback(
+		owner: string,
+		repo: string,
+		since?: Date,
+	): Promise<CommitActivityWeek[]> {
+		const sinceDate = since ?? new Date(Date.now() - 6 * 30 * 24 * 60 * 60 * 1000);
+		const sinceISO = sinceDate.toISOString();
+		const key = cacheKey("github", `/repos/${owner}/${repo}/commits/weekly-counts`, {
+			since: sinceISO,
+		});
+		const cached = this.cache.get<CommitActivityWeek[]>(key);
+		if (cached) return cached;
+
+		try {
+			const weekCounts = new Map<number, number>();
+			const maxPages = 10;
+
+			for (let page = 1; page <= maxPages; page++) {
+				const { data } = await this.octokit.repos.listCommits({
+					owner,
+					repo,
+					since: sinceISO,
+					per_page: 100,
+					page,
+				});
+				if (data.length === 0) break;
+
+				for (const commit of data) {
+					const dateStr = commit.commit?.author?.date ?? commit.commit?.committer?.date;
+					if (!dateStr) continue;
+					const weekStart = toMondayTimestamp(new Date(dateStr));
+					weekCounts.set(weekStart, (weekCounts.get(weekStart) ?? 0) + 1);
+				}
+
+				if (data.length < 100) break;
+			}
+
+			const result: CommitActivityWeek[] = Array.from(weekCounts.entries())
+				.sort(([a], [b]) => a - b)
+				.map(([week, total]) => ({ week, total, days: [] }));
+
+			if (result.length > 0) {
+				this.cache.set(key, result, TTL.COMMIT_STATS);
+			}
+			return result;
+		} catch {
+			return [];
+		}
+	}
+
+	async getUserOrgs(username: string): Promise<string[]> {
+		const key = cacheKey("github", `/users/${username}/orgs`);
+		const cached = this.cache.get<string[]>(key);
+		if (cached) return cached;
+
+		try {
+			const { data } = await this.octokit.orgs.listForUser({
+				username,
+				per_page: 100,
+			});
+			const result = (data as unknown as GitHubOrg[]).map((o) => o.login);
+			this.cache.set(key, result, TTL.USER);
+			return result;
+		} catch {
+			return [];
+		}
 	}
 
 	/**
