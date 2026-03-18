@@ -10,6 +10,7 @@ import { computeIssueHealth } from "../metrics/issue-health.js";
 import { computePRHealth } from "../metrics/pr-health.js";
 import { computeReleaseCadence } from "../metrics/release-cadence.js";
 import { computeSecurity } from "../metrics/security.js";
+import type { CommitActivityWeek } from "../github/types.js";
 import type {
 	IssueData,
 	OrgContributionData,
@@ -17,6 +18,25 @@ import type {
 	ScorecardData,
 } from "../metrics/types.js";
 import { computeVerdict } from "../metrics/verdict.js";
+
+const SIX_MONTHS_MS = 6 * 30 * 24 * 60 * 60 * 1000;
+const THIRTEEN_WEEKS_MS = 13 * 7 * 24 * 60 * 60 * 1000;
+
+export function needsActivityFallback(
+	data: CommitActivityWeek[],
+	pushedAt: string,
+): "none" | "full" | "supplement" {
+	const recentlyPushed = Date.now() - new Date(pushedAt).getTime() < SIX_MONTHS_MS;
+	if (!recentlyPushed) return "none";
+	if (data.length === 0) return "full";
+
+	const sorted = [...data].sort((a, b) => a.week - b.week);
+	const recent13 = sorted.slice(-13);
+	const recentTotal = recent13.reduce((s, w) => s + w.total, 0);
+	if (recentTotal === 0) return "supplement";
+
+	return "none";
+}
 
 export interface AnalyzeRepoResult {
 	repo: {
@@ -92,21 +112,39 @@ export async function handleAnalyzeRepo(
 		enrichmentSources.push("oss-insight");
 	}
 
-	// Fetch user profiles for affiliation (only top 20 if OSS Insight didn't cover it)
+	// Fetch user profiles and org memberships for affiliation
 	const topContributors = contributors.slice(0, 20);
-	const userProfiles = await Promise.all(
-		topContributors.map((c) =>
-			github.getUserProfile(c.login).catch(() => ({
-				login: c.login,
-				name: null,
-				company: null,
-				email: null,
-				bio: null,
-				blog: null,
-				avatar_url: "",
-			})),
+	const rateInfo = github.getRateLimit();
+	const canFetchOrgs = !rateInfo || rateInfo.remaining > 50;
+
+	const [userProfiles, userOrgResults] = await Promise.all([
+		Promise.all(
+			topContributors.map((c) =>
+				github.getUserProfile(c.login).catch(() => ({
+					login: c.login,
+					name: null,
+					company: null,
+					email: null,
+					bio: null,
+					blog: null,
+					avatar_url: "",
+				})),
+			),
 		),
-	);
+		canFetchOrgs
+			? Promise.all(
+					topContributors.map((c) =>
+						github.getUserOrgs(c.login).then(
+							(orgs) => ({ login: c.login, orgs }),
+							() => ({ login: c.login, orgs: [] as string[] }),
+						),
+					),
+				)
+			: Promise.resolve(topContributors.map((c) => ({ login: c.login, orgs: [] as string[] }))),
+	]);
+
+	const userOrgs = new Map(userOrgResults.map((r) => [r.login, r.orgs]));
+	const userNames = new Map(userProfiles.map((u) => [u.login, u.name ?? null]));
 
 	const contributorCommits = new Map(contributors.map((c) => [c.login, c.contributions]));
 
@@ -127,8 +165,28 @@ export async function handleAnalyzeRepo(
 		contributors.map((c) => ({ login: c.login, contributions: c.contributions })),
 	);
 
+	let activityData: CommitActivityWeek[] = commitActivity;
+	const fallbackMode = needsActivityFallback(commitActivity, repoData.pushed_at);
+
+	if (fallbackMode === "full") {
+		const fallbackData = await github.getCommitCountsFallback(owner, repo);
+		if (fallbackData.length > 0) {
+			activityData = fallbackData;
+			enrichmentSources.push("github-commits-fallback");
+		}
+	} else if (fallbackMode === "supplement") {
+		const thirteenWeeksAgo = new Date(Date.now() - THIRTEEN_WEEKS_MS);
+		const recentData = await github.getCommitCountsFallback(owner, repo, thirteenWeeksAgo);
+		if (recentData.length > 0) {
+			const cutoff = Math.floor(thirteenWeeksAgo.getTime() / 1000);
+			const olderWeeks = commitActivity.filter((w) => w.week < cutoff);
+			activityData = [...olderWeeks, ...recentData];
+			enrichmentSources.push("github-commits-fallback");
+		}
+	}
+
 	const activityTrend = computeActivityTrend(
-		commitActivity.map((w) => ({ week: w.week, total: w.total })),
+		activityData.map((w) => ({ week: w.week, total: w.total })),
 	);
 
 	const prData: PullRequestData[] = pulls.map((p) => ({
@@ -191,6 +249,9 @@ export async function handleAnalyzeRepo(
 		ossInsightOrgs: ossInsightOrgData,
 		contributorCommits,
 		commitEmails,
+		userOrgs,
+		repoOwner: owner,
+		userNames,
 	});
 
 	const security = computeSecurity(scorecardData);

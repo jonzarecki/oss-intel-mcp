@@ -3,6 +3,7 @@ import {
 	computeAffiliation,
 	computeElephantFactor,
 	normalizeCompanyName,
+	orgFromBio,
 	orgFromEmail,
 } from "../../src/metrics/affiliation.js";
 import type { AffiliationInput } from "../../src/metrics/types.js";
@@ -199,5 +200,209 @@ describe("computeAffiliation", () => {
 		const multi = computeAffiliation(multiOrg);
 		expect(multi.elephantFactor).toBeGreaterThan(single.elephantFactor);
 		expect(multi.score).toBeGreaterThan(single.score);
+	});
+
+	it("repo-owner org membership overrides academic company field", () => {
+		const input: AffiliationInput = {
+			userProfiles: [
+				{ login: "AlexCheema", company: "University of Oxford", email: null, bio: null },
+			],
+			ossInsightOrgs: null,
+			contributorCommits: new Map([["AlexCheema", 1317]]),
+			commitEmails: new Map(),
+			userOrgs: new Map([["AlexCheema", ["exo-explore"]]]),
+			repoOwner: "exo-explore",
+		};
+		const result = computeAffiliation(input);
+		expect(result.topContributors[0]?.organization).toBe("Exo-Explore");
+	});
+
+	it("known corporate org membership resolves empty company to org", () => {
+		const input: AffiliationInput = {
+			userProfiles: [{ login: "evaline-ju", company: null, email: null, bio: null }],
+			ossInsightOrgs: null,
+			contributorCommits: new Map([["evaline-ju", 64]]),
+			commitEmails: new Map(),
+			userOrgs: new Map([["evaline-ju", ["IBM"]]]),
+			repoOwner: "kagenti",
+		};
+		const result = computeAffiliation(input);
+		expect(result.topContributors[0]?.organization).toBe("IBM");
+	});
+
+	it("falls through to company field when no org membership matches", () => {
+		const input: AffiliationInput = {
+			userProfiles: [{ login: "dev", company: "@stripe", email: null, bio: null }],
+			ossInsightOrgs: null,
+			contributorCommits: new Map([["dev", 50]]),
+			commitEmails: new Map(),
+			userOrgs: new Map([["dev", ["some-random-org"]]]),
+			repoOwner: "other-org",
+		};
+		const result = computeAffiliation(input);
+		expect(result.topContributors[0]?.organization).toBe("Stripe");
+	});
+
+	it("bio @org mention resolves when matching repo owner", () => {
+		const input: AffiliationInput = {
+			userProfiles: [
+				{
+					login: "MattBeton",
+					company: "University of Cambridge",
+					email: null,
+					bio: "Founding engineer @exo-explore",
+				},
+			],
+			ossInsightOrgs: null,
+			contributorCommits: new Map([["MattBeton", 21]]),
+			commitEmails: new Map(),
+			userOrgs: new Map([["MattBeton", ["exo-explore"]]]),
+			repoOwner: "exo-explore",
+		};
+		const result = computeAffiliation(input);
+		expect(result.topContributors[0]?.organization).toBe("Exo-Explore");
+	});
+});
+
+describe("orgFromEmail — personal domain detection", () => {
+	it("filters personal domain matching contributor login", () => {
+		expect(
+			orgFromEmail("jake@hillion.dev", { login: "JakeHillion", name: "Jake Hillion" }),
+		).toBeNull();
+	});
+
+	it("filters personal domain matching contributor surname", () => {
+		expect(orgFromEmail("hi@cheema.io", { login: "AlexCheema", name: "Alex Cheema" })).toBeNull();
+	});
+
+	it("still returns corporate domain even with contributor hint", () => {
+		expect(orgFromEmail("jake@google.com", { login: "JakeHillion", name: "Jake Hillion" })).toBe(
+			"Google",
+		);
+	});
+
+	it("still returns unknown corporate domain that does not match name", () => {
+		expect(orgFromEmail("dev@supervaize.com", { login: "alice", name: "Alice Smith" })).toBe(
+			"Supervaize",
+		);
+	});
+
+	it("returns null for domain matching login substring", () => {
+		expect(
+			orgFromEmail("contact@torvalds.dev", { login: "torvalds", name: "Linus Torvalds" }),
+		).toBeNull();
+	});
+});
+
+describe("orgFromBio — @org mentions and founder patterns", () => {
+	it("parses 'Founding engineer @org-name'", () => {
+		expect(orgFromBio("Founding engineer @exo-explore")).toBe("Exo-Explore");
+	});
+
+	it("parses 'Founder of Company Name'", () => {
+		expect(orgFromBio("Founder of EXO Labs")).toBe("EXO Labs");
+	});
+
+	it("parses 'Co-founder at Company'", () => {
+		expect(orgFromBio("Co-founder at Vercel")).toBe("Vercel");
+	});
+
+	it("parses 'engineer at Company'", () => {
+		expect(orgFromBio("Software engineer at Google")).toBe("Google");
+	});
+
+	it("bare @org matches known company", () => {
+		expect(orgFromBio("Working on cool stuff @google")).toBe("Google");
+	});
+
+	it("bare @org matches repo owner", () => {
+		expect(orgFromBio("Hacking on things @mycompany", "mycompany")).toBe("Mycompany");
+	});
+
+	it("ignores bare @org that is not known or repo owner", () => {
+		expect(orgFromBio("Follow me @twitterhandle")).toBeNull();
+	});
+});
+
+describe("computeAffiliation — full scenario tests", () => {
+	it("exo-explore/exo: academic profiles overridden by repo-org membership", () => {
+		const input: AffiliationInput = {
+			userProfiles: [
+				{ login: "AlexCheema", company: "University of Oxford", email: null, bio: null },
+				{ login: "JakeHillion", company: "EXO", email: null, bio: null },
+				{
+					login: "MattBeton",
+					company: "University of Cambridge",
+					email: null,
+					bio: "Founding engineer @exo-explore",
+				},
+				{ login: "ToxicPine", company: "VeracityLabs", email: null, bio: null },
+				{ login: "indie-dev", company: null, email: null, bio: null },
+			],
+			ossInsightOrgs: null,
+			contributorCommits: new Map([
+				["AlexCheema", 1317],
+				["JakeHillion", 74],
+				["MattBeton", 21],
+				["ToxicPine", 60],
+				["indie-dev", 100],
+			]),
+			commitEmails: new Map(),
+			userOrgs: new Map([
+				["AlexCheema", ["exo-explore"]],
+				["JakeHillion", ["exo-explore"]],
+				["MattBeton", ["exo-explore"]],
+				["ToxicPine", []],
+				["indie-dev", []],
+			]),
+			repoOwner: "exo-explore",
+		};
+		const result = computeAffiliation(input);
+
+		const alex = result.topContributors.find((c) => c.login === "AlexCheema");
+		const jake = result.topContributors.find((c) => c.login === "JakeHillion");
+		const matt = result.topContributors.find((c) => c.login === "MattBeton");
+
+		expect(alex?.organization).toBe("Exo-Explore");
+		expect(jake?.organization).toBe("Exo-Explore");
+		expect(matt?.organization).toBe("Exo-Explore");
+
+		const exoShare = result.orgShares.find((s) => s.organization === "Exo-Explore");
+		expect(exoShare).toBeDefined();
+		expect(exoShare!.percentage).toBeGreaterThan(0.7);
+	});
+
+	it("kagenti/kagenti: empty company resolved via org membership", () => {
+		const input: AffiliationInput = {
+			userProfiles: [
+				{ login: "pdettori", company: "@IBM", email: null, bio: null },
+				{ login: "evaline-ju", company: null, email: null, bio: null },
+				{ login: "Alan-Cha", company: null, email: null, bio: null },
+				{ login: "indie1", company: null, email: null, bio: null },
+			],
+			ossInsightOrgs: null,
+			contributorCommits: new Map([
+				["pdettori", 200],
+				["evaline-ju", 64],
+				["Alan-Cha", 52],
+				["indie1", 30],
+			]),
+			commitEmails: new Map(),
+			userOrgs: new Map([
+				["pdettori", ["IBM"]],
+				["evaline-ju", ["IBM"]],
+				["Alan-Cha", []],
+				["indie1", []],
+			]),
+			repoOwner: "kagenti",
+		};
+		const result = computeAffiliation(input);
+
+		const evaline = result.topContributors.find((c) => c.login === "evaline-ju");
+		expect(evaline?.organization).toBe("IBM");
+
+		const ibmShare = result.orgShares.find((s) => s.organization === "IBM");
+		expect(ibmShare).toBeDefined();
+		expect(ibmShare!.percentage).toBeGreaterThan(0.6);
 	});
 });

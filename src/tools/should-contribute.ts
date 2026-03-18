@@ -110,41 +110,84 @@ export async function handleShouldContribute(
 	const totalContributors = prAuthorCounts.size;
 	const repeatContributors = Array.from(prAuthorCounts.values()).filter((c) => c > 1).length;
 
-	// Top maintainers with org affiliation
+	// Top maintainers with org affiliation (uses computeAffiliation for consistency)
 	const topMaintainerLogins = contributors.slice(0, 5);
-	const profiles = await Promise.all(
-		topMaintainerLogins.map((c) =>
-			github.getUserProfile(c.login).catch(() => ({
-				login: c.login,
-				name: null,
-				company: null,
-				email: null,
-				bio: null,
-				blog: null,
-				avatar_url: "",
-			})),
+	const rateInfo = github.getRateLimit();
+	const canFetchOrgs = !rateInfo || rateInfo.remaining > 50;
+
+	const [profiles, maintainerOrgResults] = await Promise.all([
+		Promise.all(
+			topMaintainerLogins.map((c) =>
+				github.getUserProfile(c.login).catch(() => ({
+					login: c.login,
+					name: null,
+					company: null,
+					email: null,
+					bio: null,
+					blog: null,
+					avatar_url: "",
+				})),
+			),
 		),
-	);
+		canFetchOrgs
+			? Promise.all(
+					topMaintainerLogins.map((c) =>
+						github.getUserOrgs(c.login).then(
+							(orgs) => ({ login: c.login, orgs }),
+							() => ({ login: c.login, orgs: [] as string[] }),
+						),
+					),
+				)
+			: Promise.resolve(
+					topMaintainerLogins.map((c) => ({ login: c.login, orgs: [] as string[] })),
+				),
+	]);
+
+	const maintainerOrgs = new Map(maintainerOrgResults.map((r) => [r.login, r.orgs]));
 
 	const topMaintainers = topMaintainerLogins.map((c, i) => {
 		const profile = profiles[i];
 		let org = "Independent";
+		const hint = { login: c.login, name: profile?.name ?? null };
 
-		// Multi-signal: commit email > profile company > profile email
-		const emails = commitEmailMap.get(c.login) ?? [];
-		for (const email of emails) {
-			const match = orgFromEmail(email);
-			if (match) {
-				org = match;
-				break;
+		// Signal 1: repo-owner org membership
+		const memberOrgs = maintainerOrgs.get(c.login) ?? [];
+		if (memberOrgs.some((o) => o.toLowerCase() === owner.toLowerCase())) {
+			org = normalizeCompanyName(owner);
+		}
+
+		// Signal 2: commit email
+		if (org === "Independent") {
+			const emails = commitEmailMap.get(c.login) ?? [];
+			for (const email of emails) {
+				const match = orgFromEmail(email, hint);
+				if (match) {
+					org = match;
+					break;
+				}
 			}
 		}
+
+		// Signal 3: profile company
 		if (org === "Independent" && profile?.company) {
 			const cleaned = normalizeCompanyName(profile.company);
 			if (cleaned && cleaned !== "Independent") org = cleaned;
 		}
+
+		// Signal 4: known corporate org membership
+		if (org === "Independent") {
+			for (const memberOrg of memberOrgs) {
+				const cleaned = normalizeCompanyName(memberOrg);
+				if (cleaned !== "Independent") {
+					org = cleaned;
+					break;
+				}
+			}
+		}
+
+		// Signal 5: profile email
 		if (org === "Independent" && profile?.email) {
-			const match = orgFromEmail(profile.email);
+			const match = orgFromEmail(profile.email, hint);
 			if (match) org = match;
 		}
 

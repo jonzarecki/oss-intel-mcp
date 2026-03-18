@@ -7,7 +7,15 @@ import type {
 } from "./types.js";
 
 export function computeAffiliation(input: AffiliationInput): AffiliationResult {
-	const { userProfiles, ossInsightOrgs, contributorCommits, commitEmails } = input;
+	const {
+		userProfiles,
+		ossInsightOrgs,
+		contributorCommits,
+		commitEmails,
+		userOrgs,
+		repoOwner,
+		userNames,
+	} = input;
 
 	const ossInsightOrgMap = buildOssInsightLookup(ossInsightOrgs);
 
@@ -18,6 +26,9 @@ export function computeAffiliation(input: AffiliationInput): AffiliationResult {
 			u,
 			commitEmails.get(u.login) ?? [],
 			ossInsightOrgMap.get(u.login.toLowerCase()) ?? null,
+			userOrgs?.get(u.login) ?? null,
+			repoOwner ?? null,
+			userNames?.get(u.login) ?? null,
 		),
 		commits: contributorCommits.get(u.login) ?? 0,
 	}));
@@ -98,39 +109,71 @@ function computeAffiliationScore(ef: number, corporatePct: number): number {
 // --- Multi-signal affiliation resolution ---
 
 function resolveOrganization(
-	_login: string,
+	login: string,
 	profile: UserProfileData | null,
 	emails: string[],
 	ossInsightOrg: string | null,
+	orgMemberships: string[] | null,
+	repoOwner: string | null,
+	userName: string | null,
 ): string {
-	// Signal 1 (highest confidence): commit email corporate domain
+	// Signal 1 (highest): repo-owner org membership
+	if (repoOwner && orgMemberships) {
+		for (const org of orgMemberships) {
+			if (org.toLowerCase() === repoOwner.toLowerCase()) {
+				return CANONICAL_COMPANIES[org.toLowerCase()] ?? capitalizeWords(org);
+			}
+		}
+	}
+
+	// Signal 2: commit email corporate domain (with personal domain filtering)
+	const hint = { login, name: userName };
 	for (const email of emails) {
-		const org = orgFromEmail(email);
+		const org = orgFromEmail(email, hint);
 		if (org) return org;
 	}
 
-	// Signal 2: GitHub profile company field
+	// Signal 3: GitHub profile company field
+	// If the company looks academic, check bio first for a stronger signal
+	if (profile?.company && isAcademicAffiliation(profile.company)) {
+		if (profile.bio) {
+			const bioOrg = orgFromBio(profile.bio, repoOwner ?? undefined);
+			if (bioOrg && bioOrg !== "Independent") return bioOrg;
+		}
+	}
 	if (profile?.company) {
 		const cleaned = normalizeCompanyName(profile.company);
 		if (cleaned && cleaned !== "Independent" && !isLocation(cleaned)) return cleaned;
 	}
 
-	// Signal 3: GitHub profile email domain
+	// Signal 4: known corporate org membership
+	if (orgMemberships) {
+		for (const org of orgMemberships) {
+			const lower = org.toLowerCase();
+			const canonical = CANONICAL_COMPANIES[lower];
+			if (canonical) return canonical;
+			const domainKey = `${lower}.com`;
+			const domainMatch = WELL_KNOWN_DOMAINS[domainKey];
+			if (domainMatch) return domainMatch;
+		}
+	}
+
+	// Signal 5: GitHub profile email domain
 	if (profile?.email) {
-		const org = orgFromEmail(profile.email);
+		const org = orgFromEmail(profile.email, hint);
 		if (org) return org;
 	}
 
-	// Signal 4: OSS Insight org data
+	// Signal 6: OSS Insight org data (used as normalization source, not per-login lookup)
 	if (ossInsightOrg) {
 		const cleaned = normalizeCompanyName(ossInsightOrg);
 		if (cleaned && cleaned !== "Independent" && !isNoiseOrg(ossInsightOrg) && !isLocation(cleaned))
 			return cleaned;
 	}
 
-	// Signal 5 (lowest confidence): bio parsing
+	// Signal 7 (lowest): bio parsing
 	if (profile?.bio) {
-		const org = orgFromBio(profile.bio);
+		const org = orgFromBio(profile.bio, repoOwner ?? undefined);
 		if (org) return org;
 	}
 
@@ -382,7 +425,10 @@ const FREE_EMAIL_DOMAINS = new Set([
 	"daum.net",
 ]);
 
-export function orgFromEmail(email: string): string | null {
+export function orgFromEmail(
+	email: string,
+	contributorHint?: { login: string; name: string | null },
+): string | null {
 	const domain = email.split("@")[1]?.toLowerCase();
 	if (!domain) return null;
 	if (FREE_EMAIL_DOMAINS.has(domain)) return null;
@@ -396,27 +442,76 @@ export function orgFromEmail(email: string): string | null {
 	if (parts.length >= 2) {
 		const name = parts[0]!;
 		if (name.length >= 3) {
+			if (contributorHint && isPersonalDomain(name, contributorHint.login, contributorHint.name)) {
+				return null;
+			}
 			return CANONICAL_COMPANIES[name] ?? capitalizeWords(name);
 		}
 	}
 	return null;
 }
 
+function isPersonalDomain(domainBase: string, login: string, name: string | null): boolean {
+	const base = domainBase.toLowerCase();
+	const loginLower = login.toLowerCase();
+
+	if (base === loginLower) return true;
+	if (loginLower.includes(base) || base.includes(loginLower)) return true;
+
+	if (name) {
+		const nameParts = name.toLowerCase().split(/[\s-]+/);
+		for (const part of nameParts) {
+			if (part.length >= 3 && (base === part || base.includes(part) || part.includes(base))) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 // --- Bio parsing ---
 
 const BIO_PATTERNS = [
+	/(?:founder|co-?founder|founding\s+\w+)\s+@(\w[\w-]*)/i,
+	/(?:founder|co-?founder)\s+(?:of|at)\s+(\w[\w\s]*\w)/i,
 	/(?:engineer|developer|designer|working|employed)\s+(?:at|@)\s+(\w[\w\s]*\w)/i,
 	/(?:at|@)\s+(Google|Microsoft|Meta|Amazon|Apple|Netflix|IBM|Red Hat|GitHub|Vercel|Cloudflare|Stripe|Shopify|Grafana|PostHog|Datadog)/i,
 ];
 
-function orgFromBio(bio: string): string | null {
+const BIO_AT_ORG_PATTERN = /@(\w[\w-]+)/;
+
+export function orgFromBio(bio: string, repoOwner?: string): string | null {
 	for (const pattern of BIO_PATTERNS) {
 		const match = bio.match(pattern);
 		if (match?.[1]) {
-			return normalizeCompanyName(match[1]);
+			const name = match[1].replace(/^@/, "");
+			return normalizeCompanyName(name);
 		}
 	}
+
+	// Fallback: bare @org mention — only trust if it matches the repo owner or a known company
+	const atMatch = bio.match(BIO_AT_ORG_PATTERN);
+	if (atMatch?.[1]) {
+		const orgLogin = atMatch[1];
+		if (repoOwner && orgLogin.toLowerCase() === repoOwner.toLowerCase()) {
+			return normalizeCompanyName(orgLogin);
+		}
+		const normalized = normalizeCompanyName(orgLogin);
+		if (normalized !== "Independent" && CANONICAL_COMPANIES[orgLogin.toLowerCase()]) {
+			return normalized;
+		}
+	}
+
 	return null;
+}
+
+// --- Academic detection ---
+
+const ACADEMIC_PATTERNS = /\b(university|universit[àáâãäå]|college|institute|school|academy|polytechnic|mit|caltech|eth\b|epfl\b)/i;
+
+function isAcademicAffiliation(company: string): boolean {
+	return ACADEMIC_PATTERNS.test(company) || /\.edu\b/i.test(company);
 }
 
 // --- Noise / location filters ---

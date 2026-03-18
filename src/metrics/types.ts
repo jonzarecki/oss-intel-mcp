@@ -52,6 +52,9 @@ export interface AffiliationInput {
 	ossInsightOrgs: OrgContributionData[] | null;
 	contributorCommits: Map<string, number>;
 	commitEmails: Map<string, string[]>;
+	userOrgs?: Map<string, string[]>;
+	repoOwner?: string;
+	userNames?: Map<string, string | null>;
 }
 
 export interface ScorecardData {

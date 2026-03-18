@@ -58,3 +58,26 @@
 - Build pipeline: tsup (server) + Vite/vite-plugin-singlefile (panels)
 - Panel sizes: 6-9KB each (self-contained HTML)
 - 98 tests passing, typecheck clean
+
+## Session 7 — Affiliation Detection Overhaul (Issues #1, #5, #6)
+- Added `getUserOrgs` to GitHub client (`GET /users/{login}/orgs`, 24h cache TTL)
+- New signal: repo-owner org membership (highest priority) — fixes academic affiliation masking employer
+- New signal: known corporate org membership — resolves empty company fields via GitHub org data
+- Personal domain detection: commit emails from vanity domains (e.g. `hillion.dev`) no longer misattributed as corporate
+- Improved bio parsing: founder patterns, `@org` GitHub mentions, cross-reference with repo owner
+- Fixed dead OSS Insight lookup (was keyed by org_name but looked up by login — never matched)
+- Extended `AffiliationInput` with `userOrgs`, `repoOwner`, `userNames` for richer signal chain
+- Rate-limit guard: skips org fetches when remaining API calls < 50
+- Wired org data into both `analyze-repo` and `should-contribute` tools
+- 20 new tests covering all new signals, personal domain filtering, bio patterns, and full scenario tests for exo-explore/exo and kagenti/kagenti
+- 114 tests passing (up from 94), typecheck clean
+
+## Session 8 — Activity Trend Fallback (Issue #3)
+- Added `getCommitCountsFallback` to GitHub client: paginates `GET /repos/.../commits?since=DATE`, groups by ISO week, caches for 6h
+- Added `needsActivityFallback` helper with two-mode detection: "full" (empty stats) and "supplement" (stale recent weeks)
+- Wired fallback into `analyze-repo.ts`: full replacement when stats is empty, recent-window supplement when last 13 weeks are zeros
+- Sanity check: fallback only triggers when `pushed_at` is within last 6 months (skip for truly abandoned repos)
+- Rate-limit aware: full fallback up to 10 pages, supplement up to 5 pages; skipped for old repos
+- Added `enrichmentSources: "github-commits-fallback"` when the fallback provides data
+- 9 new tests covering fallback method, `needsActivityFallback` helper, and integration trigger
+- 123 tests passing (up from 114), typecheck clean

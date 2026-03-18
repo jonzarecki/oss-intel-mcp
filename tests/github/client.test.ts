@@ -48,11 +48,15 @@ vi.mock("@octokit/rest", () => {
 					status: 200,
 					data: [
 						{
-							commit: { author: { email: "alice@google.com", name: "Alice" } },
+							commit: {
+								author: { email: "alice@google.com", name: "Alice", date: "2024-06-10T10:00:00Z" },
+							},
 							author: { login: "alice" },
 						},
 						{
-							commit: { author: { email: "bob@gmail.com", name: "Bob" } },
+							commit: {
+								author: { email: "bob@gmail.com", name: "Bob", date: "2024-06-11T10:00:00Z" },
+							},
 							author: { login: "bob" },
 						},
 					],
@@ -133,6 +137,12 @@ vi.mock("@octokit/rest", () => {
 					},
 				}),
 			},
+			orgs: {
+				listForUser: vi.fn().mockResolvedValue({
+					status: 200,
+					data: [{ login: "test-org" }],
+				}),
+			},
 		})),
 	};
 });
@@ -198,5 +208,44 @@ describe("GitHubClient", () => {
 	it("fetches user profiles", async () => {
 		const user = await client.getUserProfile("alice");
 		expect(user.company).toBe("Acme Corp");
+	});
+
+	it("fetches user org memberships", async () => {
+		const orgs = await client.getUserOrgs("alice");
+		expect(orgs).toEqual(["test-org"]);
+	});
+
+	it("returns empty array when getUserOrgs fails", async () => {
+		const { Octokit } = await import("@octokit/rest");
+		const instance = new Octokit();
+		(instance.orgs.listForUser as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+			new Error("forbidden"),
+		);
+		const orgs = await client.getUserOrgs("private-user");
+		expect(Array.isArray(orgs)).toBe(true);
+	});
+
+	it("getCommitCountsFallback returns weekly grouped data", async () => {
+		const result = await client.getCommitCountsFallback("test", "repo");
+		expect(result.length).toBeGreaterThan(0);
+		for (const week of result) {
+			expect(week.week).toBeTypeOf("number");
+			expect(week.total).toBeGreaterThan(0);
+		}
+	});
+
+	it("getCommitCountsFallback caches results", async () => {
+		const first = await client.getCommitCountsFallback("test", "repo");
+		const second = await client.getCommitCountsFallback("test", "repo");
+		expect(first).toEqual(second);
+	});
+
+	it("getCommitCountsFallback respects since parameter", async () => {
+		const since = new Date("2024-06-01T00:00:00Z");
+		const result = await client.getCommitCountsFallback("test", "since-repo", since);
+		expect(result.length).toBeGreaterThan(0);
+		for (const week of result) {
+			expect(week.week).toBeGreaterThanOrEqual(Math.floor(since.getTime() / 1000) - 7 * 86400);
+		}
 	});
 });
