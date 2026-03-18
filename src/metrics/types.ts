@@ -134,9 +134,15 @@ export interface SecuritySubScore {
 	reason: string;
 }
 
+export interface ReviewDepth {
+	reviewerAssignmentRate: number;
+	label: "thorough" | "partial" | "rubber-stamp" | "unknown";
+}
+
 export interface SecurityResult {
 	overallScore: number;
 	subScores: SecuritySubScore[];
+	reviewDepth: ReviewDepth | null;
 	score: number;
 }
 

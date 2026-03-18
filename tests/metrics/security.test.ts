@@ -66,4 +66,65 @@ describe("computeSecurity", () => {
 		expect(result).not.toBe(null);
 		expect(result!.subScores.every((s) => s.score >= 0)).toBe(true);
 	});
+
+	it("adjusts Code-Review score down when no reviewers are assigned (rubber-stamp)", () => {
+		const scorecard: ScorecardData = {
+			overallScore: 8,
+			checks: [
+				check("Code-Review", 10, "all changesets reviewed"),
+				check("Vulnerabilities", 10, "OK"),
+			],
+		};
+		const prData = Array.from({ length: 20 }, () => ({ requestedReviewerCount: 0 }));
+		const result = computeSecurity(scorecard, prData);
+		expect(result).not.toBe(null);
+		expect(result!.reviewDepth).not.toBe(null);
+		expect(result!.reviewDepth!.label).toBe("rubber-stamp");
+		expect(result!.reviewDepth!.reviewerAssignmentRate).toBe(0);
+		const codeReview = result!.subScores.find((s) => s.name === "Code Review");
+		expect(codeReview).toBeDefined();
+		expect(codeReview!.score).toBeLessThanOrEqual(3);
+	});
+
+	it("keeps Code-Review score when reviewers are consistently assigned (thorough)", () => {
+		const scorecard: ScorecardData = {
+			overallScore: 9,
+			checks: [
+				check("Code-Review", 10, "all changesets reviewed"),
+				check("Vulnerabilities", 10, "OK"),
+			],
+		};
+		const prData = Array.from({ length: 20 }, () => ({ requestedReviewerCount: 2 }));
+		const result = computeSecurity(scorecard, prData);
+		expect(result).not.toBe(null);
+		expect(result!.reviewDepth!.label).toBe("thorough");
+		const codeReview = result!.subScores.find((s) => s.name === "Code Review");
+		expect(codeReview!.score).toBe(10);
+	});
+
+	it("caps Code-Review score at 6 for partial review coverage", () => {
+		const scorecard: ScorecardData = {
+			overallScore: 8,
+			checks: [check("Code-Review", 10, "reviewed")],
+		};
+		const prData = [
+			...Array.from({ length: 10 }, () => ({ requestedReviewerCount: 1 })),
+			...Array.from({ length: 10 }, () => ({ requestedReviewerCount: 0 })),
+		];
+		const result = computeSecurity(scorecard, prData);
+		expect(result!.reviewDepth!.label).toBe("partial");
+		const codeReview = result!.subScores.find((s) => s.name === "Code Review");
+		expect(codeReview!.score).toBeLessThanOrEqual(6);
+	});
+
+	it("returns null reviewDepth when no PR data provided", () => {
+		const scorecard: ScorecardData = {
+			overallScore: 8,
+			checks: [check("Code-Review", 10, "reviewed")],
+		};
+		const result = computeSecurity(scorecard);
+		expect(result!.reviewDepth).toBe(null);
+		const codeReview = result!.subScores.find((s) => s.name === "Code Review");
+		expect(codeReview!.score).toBe(10);
+	});
 });
