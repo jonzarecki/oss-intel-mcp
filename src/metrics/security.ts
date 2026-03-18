@@ -1,4 +1,4 @@
-import type { ScorecardData, SecurityResult, SecuritySubScore } from "./types.js";
+import type { ReviewDepth, ScorecardData, SecurityResult, SecuritySubScore } from "./types.js";
 
 const RELEVANT_CHECKS: Record<string, { weight: number; category: string }> = {
 	Vulnerabilities: { weight: 20, category: "Vulnerabilities" },
@@ -12,34 +12,53 @@ const RELEVANT_CHECKS: Record<string, { weight: number; category: string }> = {
 	"Dangerous-Workflow": { weight: 5, category: "Dangerous Workflows" },
 };
 
+export interface MergedPRData {
+	requestedReviewerCount: number;
+}
+
 /**
  * Computes a normalized 0-100 security score from OpenSSF Scorecard checks.
+ * Optionally includes review depth from actual PR data to supplement
+ * Scorecard's Code Review check which only verifies PRs exist, not review quality.
  * Returns null if no scorecard data is available.
  */
-export function computeSecurity(scorecard: ScorecardData | null): SecurityResult | null {
+export function computeSecurity(
+	scorecard: ScorecardData | null,
+	mergedPRs?: MergedPRData[],
+): SecurityResult | null {
 	if (!scorecard) return null;
 
 	const subScores: SecuritySubScore[] = [];
 	let weightedSum = 0;
 	let totalWeight = 0;
 
+	const reviewDepth = mergedPRs ? computeReviewDepth(mergedPRs) : null;
+
 	for (const check of scorecard.checks) {
 		const config = RELEVANT_CHECKS[check.name];
 		if (!config) continue;
 
-		// Scorecard checks score from -1 (error/N/A) to 10
-		// Treat -1 as excluded from scoring
 		if (check.score < 0) continue;
 
-		const normalized = (check.score / 10) * config.weight;
+		let adjustedScore = check.score;
+		let reason = check.reason;
+
+		if (check.name === "Code-Review" && reviewDepth) {
+			adjustedScore = adjustCodeReviewScore(check.score, reviewDepth);
+			if (adjustedScore !== check.score) {
+				reason = `${check.reason} [adjusted: ${reviewDepth.reviewerAssignmentRate === 0 ? "no" : `${Math.round(reviewDepth.reviewerAssignmentRate * 100)}%`} reviewers assigned → ${reviewDepth.label}]`;
+			}
+		}
+
+		const normalized = (adjustedScore / 10) * config.weight;
 		weightedSum += normalized;
 		totalWeight += config.weight;
 
 		subScores.push({
 			name: config.category,
-			score: check.score,
+			score: adjustedScore,
 			maxScore: 10,
-			reason: check.reason,
+			reason,
 		});
 	}
 
@@ -51,6 +70,37 @@ export function computeSecurity(scorecard: ScorecardData | null): SecurityResult
 	return {
 		overallScore,
 		subScores,
+		reviewDepth,
 		score: Math.max(0, Math.min(100, overallScore)),
 	};
+}
+
+function computeReviewDepth(mergedPRs: MergedPRData[]): ReviewDepth {
+	if (mergedPRs.length === 0) {
+		return { reviewerAssignmentRate: 0, label: "unknown" };
+	}
+
+	const withReviewers = mergedPRs.filter((pr) => pr.requestedReviewerCount > 0).length;
+	const rate = withReviewers / mergedPRs.length;
+
+	let label: ReviewDepth["label"];
+	if (rate >= 0.8) {
+		label = "thorough";
+	} else if (rate >= 0.4) {
+		label = "partial";
+	} else {
+		label = "rubber-stamp";
+	}
+
+	return {
+		reviewerAssignmentRate: Math.round(rate * 1000) / 1000,
+		label,
+	};
+}
+
+function adjustCodeReviewScore(scorecardScore: number, depth: ReviewDepth): number {
+	if (depth.label === "thorough") return scorecardScore;
+	if (depth.label === "partial") return Math.min(scorecardScore, 6);
+	if (depth.label === "rubber-stamp") return Math.min(scorecardScore, 3);
+	return scorecardScore;
 }

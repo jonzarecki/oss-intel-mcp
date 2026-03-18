@@ -258,7 +258,10 @@ export async function handleAnalyzeRepo(
 		userNames,
 	});
 
-	const security = computeSecurity(scorecardData);
+	const mergedPRs = pulls
+		.filter((p) => p.merged_at)
+		.map((p) => ({ requestedReviewerCount: p.requested_reviewers.length }));
+	const security = computeSecurity(scorecardData, mergedPRs);
 
 	const verdict = computeVerdict({
 		busFactor,
