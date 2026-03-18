@@ -143,6 +143,12 @@ vi.mock("@octokit/rest", () => {
 					data: [{ login: "test-org" }],
 				}),
 			},
+			search: {
+				issuesAndPullRequests: vi.fn().mockResolvedValue({
+					status: 200,
+					data: { total_count: 42 },
+				}),
+			},
 		})),
 	};
 });

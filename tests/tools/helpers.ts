@@ -148,6 +148,7 @@ export function createMockGitHub(): GitHubClient {
 			blog: null,
 			avatar_url: "",
 		}),
+		getIssueCount: async () => 10,
 		getUserOrgs: async () => [],
 		getCommitCountsFallback: async () => [],
 		getRateLimit: () => ({ remaining: 4500, limit: 5000, resetAt: "2024-06-15T13:00:00Z" }),
