@@ -1,13 +1,19 @@
 import type { HealthLabel, IssueData, IssueHealthResult } from "./types.js";
 
-export function computeIssueHealth(issues: IssueData[], openIssueCount = 0): IssueHealthResult {
+export function computeIssueHealth(
+	issues: IssueData[],
+	openIssueCount = 0,
+	closedIssueCount?: number,
+): IssueHealthResult {
 	if (issues.length === 0 && openIssueCount === 0) {
 		return { medianResponseTimeHours: null, closeRate: 0, label: "concerning", score: 0 };
 	}
 
-	const closed = issues.filter((i) => i.closed_at);
-	const totalKnown = issues.length + openIssueCount;
-	const closeRate = totalKnown > 0 ? closed.length / totalKnown : 0;
+	const closedInSample = issues.filter((i) => i.closed_at).length;
+	const closedCount = closedIssueCount ?? closedInSample;
+	const openCount = closedIssueCount !== undefined ? openIssueCount : openIssueCount + (issues.length - closedInSample);
+	const totalKnown = closedCount + openCount;
+	const closeRate = totalKnown > 0 ? closedCount / totalKnown : 0;
 
 	const responseTimesHours = issues
 		.filter((i) => i.first_response_at)

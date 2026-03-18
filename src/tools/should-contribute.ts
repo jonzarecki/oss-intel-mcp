@@ -32,15 +32,25 @@ export async function handleShouldContribute(
 ): Promise<ShouldContributeResult> {
 	const enrichmentSources: string[] = [];
 
-	const [pulls, closedIssues, openIssues, contributors, commitEmailsRaw, ossInsightOrgs] =
-		await Promise.all([
-			github.getPulls(owner, repo, "closed", 100),
-			github.getIssues(owner, repo, "closed", 100),
-			github.getIssues(owner, repo, "open", 100),
-			github.getContributors(owner, repo),
-			github.getRecentCommitEmails(owner, repo),
-			getContributorOrgs(owner, repo, cache),
-		]);
+	const [
+		pulls,
+		closedIssues,
+		openIssues,
+		openIssueCount,
+		closedIssueCount,
+		contributors,
+		commitEmailsRaw,
+		ossInsightOrgs,
+	] = await Promise.all([
+		github.getPulls(owner, repo, "closed", 100),
+		github.getIssues(owner, repo, "closed", 100),
+		github.getIssues(owner, repo, "open", 100),
+		github.getIssueCount(owner, repo, "open"),
+		github.getIssueCount(owner, repo, "closed"),
+		github.getContributors(owner, repo),
+		github.getRecentCommitEmails(owner, repo),
+		getContributorOrgs(owner, repo, cache),
+	]);
 
 	const commitEmailMap = new Map<string, string[]>();
 	for (const ce of commitEmailsRaw) {
@@ -86,7 +96,7 @@ export async function handleShouldContribute(
 			};
 		}),
 	);
-	const issueHealth = computeIssueHealth(issueData, openIssues.length);
+	const issueHealth = computeIssueHealth(issueData, openIssueCount, closedIssueCount);
 
 	// Good first issues
 	const goodFirstIssueCount = openIssues.filter((i) =>

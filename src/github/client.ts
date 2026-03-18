@@ -346,6 +346,28 @@ export class GitHubClient {
 		}
 	}
 
+	async getIssueCount(
+		owner: string,
+		repo: string,
+		state: "open" | "closed",
+	): Promise<number> {
+		const key = cacheKey("github", `/search/issues-count/${owner}/${repo}`, { state });
+		const cached = this.cache.get<number>(key);
+		if (cached !== null) return cached;
+
+		try {
+			const { data } = await this.octokit.search.issuesAndPullRequests({
+				q: `repo:${owner}/${repo}+type:issue+state:${state}`,
+				per_page: 1,
+			});
+			const count = data.total_count;
+			this.cache.set(key, count, TTL.ISSUES);
+			return count;
+		} catch {
+			return 0;
+		}
+	}
+
 	async getUserOrgs(username: string): Promise<string[]> {
 		const key = cacheKey("github", `/users/${username}/orgs`);
 		const cached = this.cache.get<string[]>(key);
